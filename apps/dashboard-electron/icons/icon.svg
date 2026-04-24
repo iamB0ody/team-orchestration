@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  tot — team-orchestration app icon
+  Source of truth. Rendered at all sizes via scale + rasterized to:
+    icon.icns (macOS)       — bundled in apps/dashboard-electron/icons/mac/
+    icon.ico  (Windows)     — apps/dashboard-electron/icons/win/
+    icon.png  (Linux, etc.) — apps/dashboard-electron/icons/linux/
+  Conversion is done at package time (wave 7) by electron-builder, which
+  auto-reads this master SVG if the platform-specific file is absent.
+
+  Design notes:
+    - 1024×1024 master (Apple's max icon dim)
+    - Pure black bg (--bg-0) with 12% corner radius — macOS applies its
+      own squircle on top; Windows + Linux use the filled-square look.
+    - Centered λ glyph in accent green (--accent #00ff41), bold weight
+      approximating JetBrains Mono's lambda contour at scale.
+    - Thin 2% inset frame in --accent-dim (#00a028) for shape definition
+      at small sizes.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Background: black with slight rounding -->
+  <rect x="0" y="0" width="1024" height="1024" rx="128" ry="128" fill="#000000"/>
+
+  <!-- Accent-dim frame (2% inset) for small-size readability -->
+  <rect x="24" y="24" width="976" height="976" rx="112" ry="112"
+        fill="none" stroke="#00a028" stroke-width="4" opacity="0.5"/>
+
+  <!-- λ glyph — hand-tuned path to read well at 16×16 too.
+       Roughly emulates a monospaced lambda: the two diagonals converge
+       at top; the left stroke extends lower-left, right stroke lower-right. -->
+  <g fill="#00ff41">
+    <!-- main stroke: top-right corner of glyph down to lower-right terminus -->
+    <path d="
+      M 400 280
+      L 560 280
+      L 760 780
+      L 660 780
+      L 540 460
+      L 400 780
+      L 300 780
+      L 470 380
+      L 400 280
+      Z
+    "/>
+  </g>
+
+  <!-- Tiny corner markers — subtle hacker-theme framing, 1% of total dim -->
+  <g fill="#00ff41" opacity="0.55">
+    <!-- top-left L -->
+    <path d="M 72 72 L 72 120 L 80 120 L 80 80 L 120 80 L 120 72 Z"/>
+    <!-- top-right L -->
+    <path d="M 952 72 L 904 72 L 904 80 L 944 80 L 944 120 L 952 120 Z"/>
+    <!-- bottom-left L -->
+    <path d="M 72 952 L 72 904 L 80 904 L 80 944 L 120 944 L 120 952 Z"/>
+    <!-- bottom-right L -->
+    <path d="M 952 952 L 904 952 L 904 944 L 944 944 L 944 904 L 952 904 Z"/>
+  </g>
+</svg>

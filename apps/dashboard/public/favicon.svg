@@ -1,4 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#000"/>
-  <text x="16" y="22" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700" fill="#00ff41" text-anchor="middle">λ</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Browser favicon — 32×32 rendering of the master app icon
+  (apps/dashboard-electron/icons/icon.svg). Keep in visual sync.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect x="0" y="0" width="32" height="32" rx="4" ry="4" fill="#000000"/>
+  <rect x="1" y="1" width="30" height="30" rx="3.5" ry="3.5"
+        fill="none" stroke="#00a028" stroke-width="0.5" opacity="0.5"/>
+  <text x="16" y="22"
+        font-family="JetBrains Mono, ui-monospace, monospace"
+        font-size="18" font-weight="700"
+        fill="#00ff41" text-anchor="middle">λ</text>
 </svg>
