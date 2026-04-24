@@ -18,7 +18,7 @@ _(none yet)_
 | ID | Slug | Type | Stage | Commit(s) | Iterations | Duration | Completed | Notes |
 |----|------|------|-------|-----------|------------|----------|-----------|-------|
 | 0001 | dashboard-mvp-wave-1-cli | FEATURE-S | done | `2c8781c` | 0 | ~20m active | 2026-04-24 | Wave 1 of M2 dashboard MVP: parser + CLI. libs/shared-types + libs/core (registry.ts + workspace.ts + 7 vitest tests green) + apps/cli (hacker theme + ANSI colors). Validated against Shamil. Angular/Electron shell in later waves. |
-| 0002 | state-md-parser | FEATURE-S | done | _(pending, backfill)_ | 0 | ~7m active | 2026-04-24 | Wave 2 of M2: state.md parser (libs/core/mission.ts, 8 vitest tests) + `tot mission <id>` drill-down CLI with cost/activity rendering. YAML leading-zero fix. Depends: 0001. |
+| 0002 | state-md-parser | FEATURE-S | done | `3caf8ea` | 0 | ~7m active | 2026-04-24 | Wave 2 of M2: state.md parser (libs/core/mission.ts, 8 vitest tests) + `tot mission <id>` drill-down CLI with cost/activity rendering. YAML leading-zero fix. Depends: 0001. |
 
 ## Cancelled
 
