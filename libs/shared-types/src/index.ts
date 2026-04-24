@@ -151,3 +151,54 @@ export interface WorkspaceInfo {
   mission_count: { active: number; done: number; total: number };
   last_mission_update: string | null; // max(last_update) across missions
 }
+
+/**
+ * Single per-turn usage block extracted from an `assistant` JSONL event's
+ * `.message.usage`. Fields are the ones we actually aggregate; unknown
+ * fields on the wire are tolerated + ignored.
+ */
+export interface TurnUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens: number;
+  cache_creation_input_tokens: number;
+}
+
+/**
+ * Typed event shape after `parseTranscriptEvent()` normalizes a JSONL line.
+ * Fields present vary by `.type`; unknown types become `{ type, timestamp }`
+ * stubs so the stream-walker can skip them without losing order.
+ */
+export interface TranscriptEvent {
+  type: "assistant" | "user" | "system" | "attachment" | "permission-mode" | string;
+  timestamp: string | null; // null on types like file-history-snapshot
+  sessionId: string | null;
+  model: string | null; // populated on "assistant" only
+  toolUseNames: string[]; // list of tool names in content[] (empty if none)
+  usage: TurnUsage | null; // populated on "assistant" only
+  isSidechain: boolean; // sub-agent events; top-level file is always false
+}
+
+/**
+ * Result of joining a mission's [created, finished_at] window against
+ * its transcript_session_ids[]. What the live-cost recipe from
+ * SKILL.md §12 principle 13 computes, now as typed TS.
+ */
+export interface SessionSlice {
+  window: { start: string; end: string };
+  sessionIds: string[];
+  missingTranscripts: string[]; // sessionIds with no jsonl on disk
+  parentFilesRead: number;
+  subAgentFilesRead: number;
+  turnCount: number;
+  tokens: SessionTokens;
+  models: string[];
+  toolCounts: Record<string, number>;
+  subAgents: Array<{
+    agentType: string;
+    description: string;
+    startTs: string;
+    endTs: string;
+    turnCount: number;
+  }>;
+}

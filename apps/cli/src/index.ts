@@ -25,12 +25,14 @@ import {
   WORKSPACE_CONFIG_PATH,
   readMissionStateFile,
   findMissionFolder,
+  joinMission,
 } from "@team-orchestration/core";
 import type {
   MissionRegistryRow,
   MissionStatus,
   MissionState,
   ActivityLogEntry,
+  SessionSlice,
 } from "@team-orchestration/shared-types";
 import pc from "picocolors";
 import { resolve, join } from "node:path";
@@ -90,6 +92,7 @@ function printHelp(): void {
   console.log("");
   console.log("Flags (mission drill-down):");
   console.log(`  ${INFO("--log-limit")} <n>   (default: 10; use 0 for all)`);
+  console.log(`  ${INFO("--telemetry")}       (live-compute cost from JSONL transcripts — C11)`);
   console.log("");
   console.log(`Config: ${DIM(WORKSPACE_CONFIG_PATH)}`);
 }
@@ -383,6 +386,7 @@ async function cmdMission(args: string[]): Promise<number> {
   let workspacePath: string | undefined;
   let missionId: string | undefined;
   let logLimit = 10;
+  let telemetry = false;
 
   const positional: string[] = [];
   for (let i = 0; i < args.length; i++) {
@@ -394,6 +398,8 @@ async function cmdMission(args: string[]): Promise<number> {
     } else if (arg === "--log-limit") {
       const n = Number.parseInt(args[++i] ?? "", 10);
       if (Number.isFinite(n) && n >= 0) logLimit = n;
+    } else if (arg === "--telemetry" || arg === "-t") {
+      telemetry = true;
     } else if (arg && !arg.startsWith("-")) {
       positional.push(arg);
     }
@@ -436,7 +442,76 @@ async function cmdMission(args: string[]): Promise<number> {
 
   const state = await readMissionStateFile(statePath);
   printMissionDetail(state, logLimit);
+
+  if (telemetry) {
+    const slice = await joinMission(state, { workspacePath: absPath });
+    printTelemetry(state, slice);
+  }
   return 0;
+}
+
+function printTelemetry(state: MissionState, slice: SessionSlice): void {
+  console.log(divider("live telemetry (C11 — transcripts)"));
+  console.log("");
+  console.log(kv("window", `${DIM(slice.window.start)} → ${DIM(slice.window.end)}`));
+  console.log(kv("sessions scanned", ACCENT(String(slice.sessionIds.length))));
+  if (slice.missingTranscripts.length > 0) {
+    console.log(kv("missing", WARN(slice.missingTranscripts.join(", "))));
+  }
+  console.log(kv("parent files", DIM(String(slice.parentFilesRead))));
+  console.log(kv("sub-agent files", DIM(String(slice.subAgentFilesRead))));
+  console.log(kv("turns", ACCENT(String(slice.turnCount))));
+  console.log(kv("total tokens", ACCENT(fmtNumber(slice.tokens.total))));
+  console.log(kv("  input", DIM(fmtNumber(slice.tokens.input))));
+  console.log(kv("  output", DIM(fmtNumber(slice.tokens.output))));
+  console.log(kv("  cache read", DIM(fmtNumber(slice.tokens.cache_read))));
+  console.log(kv("  cache create", DIM(fmtNumber(slice.tokens.cache_creation))));
+  if (slice.models.length > 0) {
+    console.log(kv("models", slice.models.map((m) => INFO(m)).join(" ")));
+  }
+
+  // Tool-use frequency — top 8
+  const toolEntries = Object.entries(slice.toolCounts).sort(
+    ([, a], [, b]) => b - a,
+  );
+  if (toolEntries.length > 0) {
+    console.log("");
+    console.log(divider("tool use"));
+    for (const [tool, count] of toolEntries.slice(0, 8)) {
+      console.log(`  ${DIM("•")} ${INFO(tool.padEnd(16, " "))} ${ACCENT(String(count))}`);
+    }
+    if (toolEntries.length > 8) {
+      console.log(`  ${DIM(`… ${toolEntries.length - 8} more tool types`)}`);
+    }
+  }
+
+  // Sub-agents
+  if (slice.subAgents.length > 0) {
+    console.log("");
+    console.log(divider("sub-agents"));
+    for (const sa of slice.subAgents) {
+      console.log(
+        `  ${INFO(sa.agentType.padEnd(32, " "))} ${ACCENT(String(sa.turnCount).padStart(3, " "))} turns  ${DIM(sa.description.slice(0, 60))}`,
+      );
+    }
+  }
+
+  // Frontmatter vs live — drift check
+  if (state.session_tokens && state.session_tokens.total > 0) {
+    const delta = slice.tokens.total - state.session_tokens.total;
+    const pct = state.session_tokens.total > 0 ? (delta / state.session_tokens.total) * 100 : 0;
+    console.log("");
+    console.log(divider("frontmatter vs live"));
+    console.log(kv("frontmatter total", DIM(fmtNumber(state.session_tokens.total))));
+    console.log(kv("live total", ACCENT(fmtNumber(slice.tokens.total))));
+    if (Math.abs(pct) < 1) {
+      console.log(kv("delta", ACCENT(`${delta >= 0 ? "+" : ""}${fmtNumber(delta)} (<1%) ✓`)));
+    } else {
+      console.log(kv("delta", WARN(`${delta >= 0 ? "+" : ""}${fmtNumber(delta)} (${pct.toFixed(1)}%) !`)));
+    }
+  }
+
+  console.log("");
 }
 
 async function main(): Promise<void> {
