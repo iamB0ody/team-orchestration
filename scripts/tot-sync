@@ -70,8 +70,22 @@ echo "─── agents ───────────────────
 shopt -s nullglob
 for agent_file in "$REPO_ROOT"/agents/*.md; do
   base="$(basename "$agent_file")"
+  # Skip repo docs (README.md etc.) — only actual agent prompts are sync-tracked.
+  # Must mirror the same filter in install.sh.
+  if [[ "$base" == "README.md" ]]; then continue; fi
   check "$agent_file" "$CLAUDE_DIR/agents/$base" "$base"
 done
+
+echo
+echo "─── legacy shamil-orchestration (if installed) ────────────────────────"
+if [[ -e "$CLAUDE_DIR/skills/shamil-orchestration/SKILL.md" ]]; then
+  check \
+    "$REPO_ROOT/skill/SKILL.md" \
+    "$CLAUDE_DIR/skills/shamil-orchestration/SKILL.md" \
+    "SKILL.md (legacy unified)"
+else
+  echo "  — not installed; skipping"
+fi
 
 echo
 if (( drift_count == 0 )); then

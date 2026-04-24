@@ -103,13 +103,26 @@ echo "─── skill ───────────────────�
 link_or_skip \
   "$REPO_ROOT/skill/SKILL.md" \
   "$CLAUDE_DIR/skills/$SKILL_NAME/SKILL.md" \
-  "SKILL.md"
+  "SKILL.md (team-orchestration-source)"
+
+# If a legacy shamil-orchestration skill already exists on this machine
+# (consuming project that seeded this repo), also point its SKILL.md at
+# the source-of-truth so /shamil:start uses the same content.
+LEGACY_SKILL="$CLAUDE_DIR/skills/shamil-orchestration/SKILL.md"
+if [[ -d "$CLAUDE_DIR/skills/shamil-orchestration" ]] || [[ -f "$LEGACY_SKILL" ]]; then
+  link_or_skip \
+    "$REPO_ROOT/skill/SKILL.md" \
+    "$LEGACY_SKILL" \
+    "SKILL.md (legacy shamil-orchestration — unified)"
+fi
 
 echo
 echo "─── agents ────────────────────────────────────────────────────────────"
 shopt -s nullglob
 for agent_file in "$REPO_ROOT"/agents/*.md; do
   base="$(basename "$agent_file")"
+  # Skip repo docs (README.md etc.) — only actual agent prompts get symlinked
+  if [[ "$base" == "README.md" ]]; then continue; fi
   link_or_skip "$agent_file" "$CLAUDE_DIR/agents/$base" "$base"
 done
 
