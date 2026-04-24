@@ -17,7 +17,7 @@ _(none yet)_
 
 | ID | Slug | Type | Stage | Commit(s) | Iterations | Duration | Completed | Notes |
 |----|------|------|-------|-----------|------------|----------|-----------|-------|
-| 0001 | dashboard-mvp-wave-1-cli | FEATURE-S | done | _(pending, backfill)_ | 0 | ~20m active | 2026-04-24 | Wave 1 of M2 dashboard MVP: parser + CLI. libs/shared-types + libs/core (registry.ts + workspace.ts + 7 vitest tests green) + apps/cli (hacker theme + ANSI colors). Validated against Shamil. Angular/Electron shell in later waves. |
+| 0001 | dashboard-mvp-wave-1-cli | FEATURE-S | done | `2c8781c` | 0 | ~20m active | 2026-04-24 | Wave 1 of M2 dashboard MVP: parser + CLI. libs/shared-types + libs/core (registry.ts + workspace.ts + 7 vitest tests green) + apps/cli (hacker theme + ANSI colors). Validated against Shamil. Angular/Electron shell in later waves. |
 
 ## Cancelled
 
