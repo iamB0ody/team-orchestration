@@ -1,0 +1,17 @@
+{
+  "_comment": "Copy this file to $XDG_CONFIG_HOME/team-orchestration/workspaces.json (or ~/.config/team-orchestration/workspaces.json) and edit with your own paths. Each entry needs a `path` (absolute); `label` is optional.",
+  "workspaces": [
+    {
+      "path": "/Volumes/SanDiskSSD/mine/shamil",
+      "label": "shamil"
+    },
+    {
+      "path": "/Volumes/SanDiskSSD/mine/omyra",
+      "label": "omyra"
+    },
+    {
+      "path": "/Volumes/SanDiskSSD/mine/team-orchestration",
+      "label": "team-orchestration"
+    }
+  ]
+}

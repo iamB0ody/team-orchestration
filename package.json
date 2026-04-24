@@ -18,12 +18,9 @@
     "install:workflow": "./scripts/install.sh",
     "sync": "./scripts/tot-sync",
     "commit:skill": "./scripts/tot-commit-skill",
-    "build": "nx run-many -t build",
-    "test": "nx run-many -t test",
-    "lint": "nx run-many -t lint",
-    "dashboard:serve": "nx serve dashboard",
-    "dashboard:electron": "nx run dashboard-electron:serve",
-    "dashboard:package": "nx run dashboard-electron:package"
+    "tot": "pnpm -F @team-orchestration/cli start",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "nx": "^22.6.2",
