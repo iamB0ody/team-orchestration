@@ -1,0 +1,7 @@
+{
+  "name": "@team-orchestration/dashboard",
+  "version": "0.0.1",
+  "description": "Angular 21 renderer for the team-orchestration desktop dashboard. Runs inside Electron; consumes @team-orchestration/core via typed IPC. Hacker theme.",
+  "private": true,
+  "type": "module"
+}

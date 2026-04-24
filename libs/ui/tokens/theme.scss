@@ -1,0 +1,260 @@
+// ============================================================================
+// team-orchestration — hacker theme
+// ============================================================================
+// Matrix-meets-modern. High-contrast, monospace, grid-aligned, zero rounded
+// corners, zero shadows, zero gradients. Feel: k9s / lazygit / btop / Tailscale
+// admin / Raycast plugins. Optional CRT scan-line overlay toggled via Settings.
+//
+// All tokens exposed as CSS custom properties. Swap the monospace font by
+// overriding --font-mono. Every color token has a semantic name; raw hex
+// values live only in this file.
+// ============================================================================
+
+:root {
+  // --------------------------------------------------------------------------
+  // Palette — surfaces
+  // --------------------------------------------------------------------------
+  --bg-0: #000000;              // page bg — pure black
+  --bg-1: #0a0a0a;              // card / panel
+  --bg-2: #111111;              // hover / elevated
+  --bg-3: #1a1a1a;              // pressed / selected
+  --bg-4: #202020;              // chip / input bg
+
+  // --------------------------------------------------------------------------
+  // Palette — foreground
+  // --------------------------------------------------------------------------
+  --fg-0: #e5e5e5;              // primary text
+  --fg-1: #a0a0a0;              // secondary
+  --fg-2: #606060;              // tertiary / labels
+  --fg-3: #303030;              // disabled
+
+  // --------------------------------------------------------------------------
+  // Palette — accents (semantic)
+  // --------------------------------------------------------------------------
+  --accent: #00ff41;            // signature terminal green
+  --accent-dim: #00a028;        // muted — borders / subtle fills
+  --accent-glow: rgba(0, 255, 65, 0.35);  // focus rings
+
+  --warn: #ffb000;              // amber — gate pending, mid-severity
+  --err:  #ff3030;              // red   — failures, destructive
+  --info: #00bfff;              // cyan  — active / informational
+  --muted: #707070;             // gray  — done / finished
+
+  // --------------------------------------------------------------------------
+  // Palette — status pills (mission stages)
+  // --------------------------------------------------------------------------
+  --status-active:   var(--accent);
+  --status-paused:   var(--warn);
+  --status-done:     var(--muted);
+  --status-cancelled: var(--err);
+  --status-archived: var(--fg-3);
+
+  // --------------------------------------------------------------------------
+  // Borders
+  // --------------------------------------------------------------------------
+  --border:        #1f1f1f;     // hairline
+  --border-bright: #303030;     // emphasized
+  --border-accent: var(--accent-dim);
+  --border-focus:  var(--accent);
+
+  // --------------------------------------------------------------------------
+  // Typography
+  // --------------------------------------------------------------------------
+  --font-mono: "JetBrains Mono", "Geist Mono", "IBM Plex Mono",
+               "SF Mono", "Menlo", "Consolas", monospace;
+  --font-ui: var(--font-mono);  // we mono everywhere — intentional
+
+  --fs-xs:   11px;
+  --fs-sm:   12px;
+  --fs-base: 13px;
+  --fs-md:   14px;
+  --fs-lg:   16px;
+  --fs-xl:   20px;
+  --fs-2xl:  28px;
+  --fs-3xl:  40px;
+
+  --lh-tight:  1.2;
+  --lh-base:   1.45;
+  --lh-relaxed: 1.6;
+
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-bold:   700;
+
+  --letter-spacing-tight:  -0.01em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide:   0.05em;   // used on label tokens (ALL-CAPS)
+
+  // --------------------------------------------------------------------------
+  // Geometry — sharp
+  // --------------------------------------------------------------------------
+  --radius: 0;                  // default: NO rounded corners
+  --radius-sm: 2px;             // inputs only, if softer feel desired
+
+  --border-width: 1px;
+  --border-width-thick: 2px;
+
+  // --------------------------------------------------------------------------
+  // Spacing — 4px grid
+  // --------------------------------------------------------------------------
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  // --------------------------------------------------------------------------
+  // Motion — fast, functional, no bounce
+  // --------------------------------------------------------------------------
+  --motion-instant: 0ms;
+  --motion-fast:    80ms ease-out;
+  --motion-base:    120ms ease-out;
+  --motion-slow:    200ms ease-out;
+
+  // --------------------------------------------------------------------------
+  // Z-index scale
+  // --------------------------------------------------------------------------
+  --z-base:     0;
+  --z-sticky:   100;
+  --z-dropdown: 200;
+  --z-overlay:  300;
+  --z-modal:    400;
+  --z-toast:    500;
+
+  // --------------------------------------------------------------------------
+  // Effects
+  // --------------------------------------------------------------------------
+  --scan-line-opacity: 0.03;    // CRT overlay — disabled until enabled
+  --focus-ring: 0 0 0 2px var(--accent-glow);
+}
+
+// ============================================================================
+// Global base — apply hacker aesthetic everywhere
+// ============================================================================
+
+html, body {
+  background: var(--bg-0);
+  color: var(--fg-0);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  font-feature-settings: "tnum" 1, "zero" 1, "ss01" 1, "ss02" 1, "calt" 1;
+  // tnum — tabular figures (numbers align in columns)
+  // zero — slashed zero (distinguishes O from 0)
+  // ss01/ss02 — JetBrains stylistic sets (small caps, alt shapes)
+  // calt — contextual ligatures (=> becomes arrow, etc.)
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+// Tabular figures on all numeric-looking elements
+.tabular, td, th, pre, code, .sha, .token-count, .timestamp {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+// ============================================================================
+// Utility classes — signature moves
+// ============================================================================
+
+// ASCII divider — renders a horizontal dash row with optional label
+.ascii-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--fg-2);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    border-top: 1px dashed var(--border);
+  }
+}
+
+// Prompt-prefixed label ($ foo, > bar, λ baz)
+.prompt-label {
+  color: var(--fg-2);
+  &::before {
+    content: attr(data-prompt) " ";
+    color: var(--accent);
+  }
+}
+
+// Status pill — bracketed token, never rounded
+.status-pill {
+  display: inline-block;
+  padding: 2px var(--sp-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  border-radius: 0;
+
+  &::before { content: "["; }
+  &::after  { content: "]"; }
+
+  &[data-status="active"]    { color: var(--status-active); }
+  &[data-status="paused"]    { color: var(--status-paused); }
+  &[data-status="done"]      { color: var(--status-done); }
+  &[data-status="cancelled"] { color: var(--status-cancelled); }
+  &[data-status="archived"]  { color: var(--status-archived); }
+}
+
+// Blinking cursor — append to live status
+.cursor-blink {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  margin-left: 2px;
+  background: currentColor;
+  vertical-align: text-bottom;
+  animation: cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50%  { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+// Dotted grid background — for mission-detail canvases
+.grid-bg {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--border) 1px,
+    transparent 0
+  );
+  background-size: 8px 8px;
+}
+
+// CRT scan-line overlay — opt-in via [data-scanlines] on a container
+[data-scanlines]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    rgba(255, 255, 255, var(--scan-line-opacity)) 3px,
+    transparent 4px
+  );
+  background-size: 100% 4px;
+  z-index: var(--z-overlay);
+}
+
+// Focus ring — accent green, not Material's purple blob
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

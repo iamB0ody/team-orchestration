@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# ============================================================================
+# team-orchestration — tot-sync
+# ============================================================================
+# Dry-run drift-check between ~/.claude/** install targets and this repo's
+# source-of-truth files. Catches manual drift (someone edited ~/.claude/
+# without going through a symlink — shouldn't happen post-install, but does).
+#
+# Usage: ./scripts/tot-sync
+#
+# Exit code: 0 if clean, non-zero if drift detected.
+# ============================================================================
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CLAUDE_DIR="${HOME}/.claude"
+SKILL_NAME="team-orchestration-source"
+
+drift_count=0
+
+check() {
+  local source="$1"
+  local target="$2"
+  local label="$3"
+
+  if [[ ! -e "$target" ]]; then
+    echo "  ✗ $label — target MISSING"
+    drift_count=$((drift_count + 1))
+    return
+  fi
+
+  if [[ -L "$target" ]]; then
+    if [[ "$(readlink "$target")" == "$source" ]]; then
+      # Symlink correct + source readable — no drift possible.
+      echo "  ✓ $label — linked"
+      return
+    else
+      echo "  ! $label — symlink points elsewhere: $(readlink "$target")"
+      drift_count=$((drift_count + 1))
+      return
+    fi
+  fi
+
+  # Not a symlink — regular file. Compare contents.
+  if ! diff -q "$source" "$target" >/dev/null 2>&1; then
+    echo "  ✗ $label — CONTENT DRIFT"
+    echo "      source: $source"
+    echo "      target: $target"
+    echo "      diff:"
+    diff -u "$source" "$target" | head -20 | sed 's/^/        /'
+    drift_count=$((drift_count + 1))
+  else
+    echo "  ~ $label — content matches, but not a symlink (rerun install.sh?)"
+  fi
+}
+
+echo "┌─── team-orchestration drift check ─────────────────────────────────┐"
+echo "│ $REPO_ROOT  ↔  $CLAUDE_DIR"
+echo "└────────────────────────────────────────────────────────────────────┘"
+
+echo
+echo "─── skill ─────────────────────────────────────────────────────────────"
+check \
+  "$REPO_ROOT/skill/SKILL.md" \
+  "$CLAUDE_DIR/skills/$SKILL_NAME/SKILL.md" \
+  "SKILL.md"
+
+echo
+echo "─── agents ────────────────────────────────────────────────────────────"
+shopt -s nullglob
+for agent_file in "$REPO_ROOT"/agents/*.md; do
+  base="$(basename "$agent_file")"
+  check "$agent_file" "$CLAUDE_DIR/agents/$base" "$base"
+done
+
+echo
+if (( drift_count == 0 )); then
+  echo "── clean — no drift. ──"
+  exit 0
+else
+  echo "── DRIFT DETECTED: $drift_count issue(s). Run ./scripts/install.sh to fix. ──"
+  exit 1
+fi

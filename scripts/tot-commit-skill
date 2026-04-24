@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# ============================================================================
+# team-orchestration — tot-commit-skill
+# ============================================================================
+# Cross-repo helper for the pattern codified in SKILL.md §11a C12:
+#
+#   When a mission (in some OTHER workspace, e.g. Shamil) edits global
+#   workflow files (SKILL.md / agent prompts), the consuming workspace's
+#   commit captures only the mission folder + REGISTRY. The SKILL.md /
+#   agent diff is committed HERE in team-orchestration with a cross-ref
+#   back to the originating mission.
+#
+# This script:
+#   1. Detects SKILL.md / agents drift vs HEAD in team-orchestration
+#   2. Stages only those files
+#   3. Opens a pre-filled commit body referencing the mission folder
+#
+# Usage:
+#   ./scripts/tot-commit-skill <workspace-path>/missions/NNNN-<slug>/
+#
+# Example:
+#   ./scripts/tot-commit-skill /Volumes/SanDiskSSD/mine/shamil/missions/0034-setup-orchestration-repo/
+#
+# ============================================================================
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
+
+if [[ $# -ne 1 ]]; then
+  echo "usage: tot-commit-skill <workspace-path>/missions/NNNN-<slug>/" >&2
+  echo "" >&2
+  echo "Pass the absolute path to the originating mission folder." >&2
+  echo "Body will cross-reference the mission; workflow diff will be committed here." >&2
+  exit 1
+fi
+
+MISSION_PATH="$1"
+MISSION_PATH="${MISSION_PATH%/}"   # strip trailing slash
+
+if [[ ! -d "$MISSION_PATH" ]]; then
+  echo "ERROR: mission folder not found: $MISSION_PATH" >&2
+  exit 1
+fi
+
+MISSION_SLUG="$(basename "$MISSION_PATH")"
+WORKSPACE_PATH="$(dirname "$(dirname "$MISSION_PATH")")"
+
+# Detect drift — what has changed under skill/ or agents/
+DRIFT_FILES=$(git diff --name-only HEAD -- skill/ agents/ || true)
+if [[ -z "$DRIFT_FILES" ]]; then
+  echo "No drift in skill/ or agents/ vs HEAD. Nothing to commit."
+  exit 0
+fi
+
+echo "┌─── tot-commit-skill ───────────────────────────────────────────────┐"
+echo "│ mission:   $MISSION_SLUG"
+echo "│ workspace: $WORKSPACE_PATH"
+echo "│ repo:      $REPO_ROOT"
+echo "└────────────────────────────────────────────────────────────────────┘"
+echo
+echo "Files with drift:"
+echo "$DRIFT_FILES" | sed 's/^/  /'
+echo
+
+# Stage only the drift files (C10 atomic staging spirit)
+git reset HEAD >/dev/null 2>&1 || true
+# shellcheck disable=SC2086
+git add $DRIFT_FILES
+
+STAGED=$(git diff --cached --name-only | sort)
+EXPECTED=$(echo "$DRIFT_FILES" | sort)
+if [[ "$STAGED" != "$EXPECTED" ]]; then
+  echo "ABORT: staged set != expected drift. Inspect manually." >&2
+  echo "staged:"; echo "$STAGED" | sed 's/^/  /' >&2
+  echo "expected:"; echo "$EXPECTED" | sed 's/^/  /' >&2
+  exit 1
+fi
+
+# Commit message template
+read -r -p "commit subject (≤72 chars, e.g. 'docs(skill): add C12 cross-repo commit rule'): " SUBJECT
+if [[ -z "$SUBJECT" ]]; then
+  echo "ABORT: empty subject." >&2
+  exit 1
+fi
+
+TMPFILE="$(mktemp -t tot-commit-msg.XXXXXX)"
+cat >"$TMPFILE" <<EOF
+$SUBJECT
+
+Workflow-file drift landed while running mission $MISSION_SLUG in
+$WORKSPACE_PATH. Per C12 in SKILL.md §11a, the consuming workspace's
+commit captured the mission folder + REGISTRY only; this commit
+captures the workflow side of the same change.
+
+Files in this commit:
+$(echo "$DRIFT_FILES" | sed 's/^/  /')
+
+Source: $WORKSPACE_PATH :: Mission: $MISSION_SLUG
+
+Co-Authored-By: Team Orchestration <noreply@anthropic.com>
+EOF
+
+echo
+echo "── commit message draft ──"
+cat "$TMPFILE"
+echo "──"
+echo
+read -r -p "commit? [y/N] " ans
+if [[ "$ans" =~ ^[Yy]$ ]]; then
+  git commit -F "$TMPFILE"
+  rm -f "$TMPFILE"
+  echo
+  echo "✓ committed. Remember to push + update the consuming workspace's mission"
+  echo "  state.md / REGISTRY with this commit's SHA."
+else
+  echo "Not committed. Staged files remain staged."
+  echo "Draft message saved at: $TMPFILE"
+fi

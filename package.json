@@ -1,0 +1,46 @@
+{
+  "name": "@team-orchestration/workspace",
+  "version": "0.0.1",
+  "private": true,
+  "description": "team-orchestration workflow skill + agents + desktop dashboard + shared libs",
+  "license": "MIT",
+  "author": "Abdelrahman Ahmed <abdelrahman.ui@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iamB0ody/team-orchestration.git"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "install:workflow": "./scripts/install.sh",
+    "sync": "./scripts/tot-sync",
+    "commit:skill": "./scripts/tot-commit-skill",
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "dashboard:serve": "nx serve dashboard",
+    "dashboard:electron": "nx run dashboard-electron:serve",
+    "dashboard:package": "nx run dashboard-electron:package"
+  },
+  "devDependencies": {
+    "nx": "^22.6.2",
+    "@nx/workspace": "^22.6.2",
+    "@nx/angular": "^22.6.2",
+    "@nx/eslint": "^22.6.2",
+    "@nx/jest": "^22.6.2",
+    "@nx/vite": "^22.6.2",
+    "@nx/js": "^22.6.2",
+    "typescript": "~5.6.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
+    "vitest": "^2.1.0"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": ["@babel/*", "webpack"]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@team-orchestration/core",
+  "version": "0.0.1",
+  "description": "Pure TypeScript parser + join library. Reads <workspace>/missions/**/state.md + REGISTRY.md + ~/.claude/projects/<hash>/*.jsonl transcripts, time-slices by mission window, rolls up tokens/tools/agents per stage. Angular-free. Runs in Node (CLI, tests) and browser (Electron renderer).",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "zod": "^3.23.0",
+    "yaml": "^2.6.0",
+    "fast-glob": "^3.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "@types/node": "^20.0.0"
+  }
+}
