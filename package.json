@@ -19,6 +19,9 @@
     "sync": "./scripts/tot-sync",
     "commit:skill": "./scripts/tot-commit-skill",
     "tot": "pnpm -F @team-orchestration/cli start",
+    "dashboard:server": "pnpm -F @team-orchestration/dashboard-server start",
+    "dashboard:serve": "pnpm -F @team-orchestration/dashboard dev",
+    "dashboard:build": "pnpm -F @team-orchestration/dashboard build",
     "build": "pnpm -r build",
     "test": "pnpm -r test"
   },
@@ -30,7 +33,7 @@
     "@nx/jest": "^22.6.2",
     "@nx/vite": "^22.6.2",
     "@nx/js": "^22.6.2",
-    "typescript": "~5.6.0",
+    "typescript": "~5.9.0",
     "eslint": "^9.0.0",
     "prettier": "^3.3.0",
     "vitest": "^2.1.0"

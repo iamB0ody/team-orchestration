@@ -20,6 +20,7 @@ _(none yet)_
 | 0001 | dashboard-mvp-wave-1-cli | FEATURE-S | done | `2c8781c` | 0 | ~20m active | 2026-04-24 | Wave 1 of M2 dashboard MVP: parser + CLI. libs/shared-types + libs/core (registry.ts + workspace.ts + 7 vitest tests green) + apps/cli (hacker theme + ANSI colors). Validated against Shamil. Angular/Electron shell in later waves. |
 | 0002 | state-md-parser | FEATURE-S | done | `3caf8ea` | 0 | ~7m active | 2026-04-24 | Wave 2 of M2: state.md parser (libs/core/mission.ts, 8 vitest tests) + `tot mission <id>` drill-down CLI with cost/activity rendering. YAML leading-zero fix. Depends: 0001. |
 | 0003 | transcript-join | FEATURE-S | done | `08aa5d9` | 0 | ~7m active | 2026-04-24 | Wave 3 of M2: JSONL transcript parser (transcript.ts) + time-window join engine (join.ts) + `tot mission --telemetry` CLI flag. 17 new tests → 32/32 green. Reconciles frontmatter vs live cost at ±1%. Depends: 0001, 0002. |
+| 0004 | angular-scaffold | FEATURE-F | done | _(pending, backfill)_ | 0 | ~8m active | 2026-04-24 | Wave 4 of M2: Node stdlib HTTP server (5 routes) + Angular 21 standalone zoneless app (2 routes, hacker theme, 68.85 KB bundle). 32/32 tests still green. TS 5.6→5.9. Depends: 0001-0003. |
 
 ## Cancelled
 

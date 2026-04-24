@@ -1,7 +1,35 @@
 {
   "name": "@team-orchestration/dashboard",
   "version": "0.0.1",
-  "description": "Angular 21 renderer for the team-orchestration desktop dashboard. Runs inside Electron; consumes @team-orchestration/core via typed IPC. Hacker theme.",
+  "description": "Angular 21 browser-side of the team-orchestration dashboard. Renders data from @team-orchestration/dashboard-server over fetch in dev; same contract targets Electron IPC in wave 5+.",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "dev": "ng serve --port 4200 --open",
+    "build": "ng build",
+    "test": "ng test --watch=false"
+  },
+  "dependencies": {
+    "@angular/animations": "^21.2.0",
+    "@angular/cdk": "^21.1.5",
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "@angular/router": "^21.2.0",
+    "@team-orchestration/shared-types": "workspace:*",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.2.0",
+    "@angular/build": "^21.2.0",
+    "@angular/cli": "^21.2.0",
+    "@angular/compiler-cli": "^21.2.0",
+    "@types/node": "^20.0.0",
+    "sass": "^1.80.0",
+    "typescript": "~5.9.0"
+  }
 }

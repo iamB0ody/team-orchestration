@@ -1,0 +1,63 @@
+// ============================================================================
+// Global styles — imports the hacker theme tokens from @team-orchestration/ui
+// ============================================================================
+
+@use "libs/ui/tokens/theme";
+
+// Router-outlet + body-level layout
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; // dashboard is app-like, no page scroll; sections scroll internally
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  &:hover {
+    color: var(--accent);
+  }
+}
+
+// Scrollbar — hacker style
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-0);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border: 2px solid var(--bg-0);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+}
+
+// Loading + error states
+.tot-loading {
+  padding: var(--sp-5);
+  color: var(--fg-2);
+  &::before {
+    content: "⟳ ";
+    color: var(--accent);
+  }
+}
+
+.tot-error {
+  padding: var(--sp-5);
+  color: var(--err);
+  border-left: 2px solid var(--err);
+  margin: var(--sp-3) 0;
+  &::before {
+    content: "! ";
+    font-weight: var(--fw-bold);
+  }
+}

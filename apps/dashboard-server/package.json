@@ -1,0 +1,21 @@
+{
+  "name": "@team-orchestration/dashboard-server",
+  "version": "0.0.1",
+  "description": "Tiny HTTP server that exposes the @team-orchestration/core parser to the Angular dashboard. In dev, Angular fetches from localhost:4117. In production (Electron), this same contract is implemented over IPC via @team-orchestration/ipc.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "start:watch": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@team-orchestration/core": "workspace:*",
+    "@team-orchestration/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.6.0"
+  }
+}
