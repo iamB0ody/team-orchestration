@@ -19,8 +19,19 @@
 //   2 — workspace path doesn't exist or has no missions/REGISTRY.md
 // ============================================================================
 
-import { readRegistryFile, listWorkspaces, WORKSPACE_CONFIG_PATH } from "@team-orchestration/core";
-import type { MissionRegistryRow, MissionStatus } from "@team-orchestration/shared-types";
+import {
+  readRegistryFile,
+  listWorkspaces,
+  WORKSPACE_CONFIG_PATH,
+  readMissionStateFile,
+  findMissionFolder,
+} from "@team-orchestration/core";
+import type {
+  MissionRegistryRow,
+  MissionStatus,
+  MissionState,
+  ActivityLogEntry,
+} from "@team-orchestration/shared-types";
 import pc from "picocolors";
 import { resolve, join } from "node:path";
 import { access } from "node:fs/promises";
@@ -69,11 +80,150 @@ function printHelp(): void {
   console.log(`  ${ACCENT("tot")} missions --workspace <path>`);
   console.log("      list missions in one workspace.");
   console.log("");
+  console.log(`  ${ACCENT("tot")} mission <workspace-path> <mission-id>`);
+  console.log(`  ${ACCENT("tot")} mission --workspace <path> --id <NNNN>`);
+  console.log("      drill-down: full detail for one mission.");
+  console.log("");
   console.log("Flags (missions subcommand):");
   console.log(`  ${INFO("--status")} <active|paused|done|cancelled|archived>`);
   console.log(`  ${INFO("--limit")} <n>`);
   console.log("");
+  console.log("Flags (mission drill-down):");
+  console.log(`  ${INFO("--log-limit")} <n>   (default: 10; use 0 for all)`);
+  console.log("");
   console.log(`Config: ${DIM(WORKSPACE_CONFIG_PATH)}`);
+}
+
+function fmtNumber(n: number | null | undefined): string {
+  if (n === null || n === undefined) return "—";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+function fmtDurationSec(s: number | null | undefined): string {
+  if (s === null || s === undefined) return "—";
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ${s % 60}s`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}
+
+function kv(label: string, value: string): string {
+  return `  ${LABEL(label.padEnd(18, " "))} ${value}`;
+}
+
+function printMissionDetail(state: MissionState, logLimit: number): void {
+  console.log("");
+  console.log(divider(`${state.mission} — ${state.slug}`));
+  console.log("");
+
+  // Identity / status
+  console.log(kv("id", ACCENT(state.mission)));
+  console.log(kv("slug", FG(state.slug)));
+  console.log(kv("type", INFO(state.type)));
+  console.log(kv("status", statusPill(state.status)));
+  console.log(kv("stage", FG(state.stage)));
+  if (state.current_phase) console.log(kv("phase", FG(state.current_phase)));
+  if (state.current_task) console.log(kv("task", FG(state.current_task)));
+  if (state.gate_pending) console.log(kv("gate pending", WARN(state.gate_pending)));
+  if (state.iteration_count > 0) console.log(kv("iterations", WARN(String(state.iteration_count))));
+
+  // Timing
+  console.log("");
+  console.log(divider("timing"));
+  console.log(kv("created", DIM(state.created)));
+  if (state.finished_at) console.log(kv("finished", DIM(state.finished_at)));
+  console.log(kv("last update", DIM(state.last_update)));
+  console.log(kv("last agent", DIM(state.last_agent)));
+  if (state.duration_sec !== null) console.log(kv("duration", ACCENT(fmtDurationSec(state.duration_sec))));
+  if (state.active_duration_sec !== null) {
+    console.log(kv("active duration", ACCENT(fmtDurationSec(state.active_duration_sec))));
+  }
+
+  // Dependencies
+  if (state.depends_on_missions.length > 0 || state.blocks_missions.length > 0) {
+    console.log("");
+    console.log(divider("dependencies"));
+    if (state.depends_on_missions.length > 0) {
+      console.log(kv("depends on", state.depends_on_missions.map((d) => ACCENT(d)).join(" ")));
+    }
+    if (state.blocks_missions.length > 0) {
+      console.log(kv("blocks", state.blocks_missions.map((d) => WARN(d)).join(" ")));
+    }
+  }
+
+  // Cost (C11)
+  if (state.session_tokens || state.session_models.length > 0 || state.session_turn_count !== null) {
+    console.log("");
+    console.log(divider("cost (auto — C11)"));
+    if (state.session_turn_count !== null) {
+      console.log(kv("turns", ACCENT(String(state.session_turn_count))));
+    }
+    if (state.session_tokens) {
+      const t = state.session_tokens;
+      console.log(kv("total tokens", ACCENT(fmtNumber(t.total))));
+      console.log(kv("  input", DIM(fmtNumber(t.input))));
+      console.log(kv("  output", DIM(fmtNumber(t.output))));
+      console.log(kv("  cache read", DIM(fmtNumber(t.cache_read))));
+      console.log(kv("  cache create", DIM(fmtNumber(t.cache_creation))));
+    }
+    if (state.session_models.length > 0) {
+      console.log(kv("models", state.session_models.map((m) => INFO(m)).join(" ")));
+    }
+    if (state.session_cost_usd !== null) {
+      console.log(kv("cost (USD)", ACCENT(`$${state.session_cost_usd.toFixed(2)}`)));
+    } else if (state.session_tokens) {
+      console.log(kv("cost (USD)", DIM("null — subscription plan; tokens are ground truth")));
+    }
+  }
+
+  // Transcript sessions
+  if (state.transcript_session_ids.length > 0) {
+    console.log("");
+    console.log(divider("transcript sessions"));
+    for (const sid of state.transcript_session_ids) {
+      console.log(`  ${DIM("•")} ${DIM(sid)}`);
+    }
+  }
+
+  // Cross-repo commits (C12)
+  if (state.cross_repo_commits && state.cross_repo_commits.length > 0) {
+    console.log("");
+    console.log(divider("cross-repo commits (C12)"));
+    for (const c of state.cross_repo_commits) {
+      console.log(`  ${DIM("•")} ${FG(c)}`);
+    }
+  }
+
+  // Activity log
+  console.log("");
+  const totalLog = state.activity_log.length;
+  const logLabel = logLimit === 0 || totalLog <= logLimit ? `activity log (${totalLog})` : `activity log (showing ${logLimit} of ${totalLog})`;
+  console.log(divider(logLabel));
+
+  const slice = logLimit === 0 ? state.activity_log : state.activity_log.slice(-logLimit);
+  if (slice.length === 0) {
+    console.log(`  ${DIM("(empty)")}`);
+  } else {
+    for (const entry of slice) {
+      printActivityLogEntry(entry);
+    }
+  }
+
+  console.log("");
+}
+
+function printActivityLogEntry(entry: ActivityLogEntry): void {
+  // Timestamp — short form HH:MM:SSZ for densification
+  const tsShort = entry.timestamp.replace(/^\d{4}-\d{2}-\d{2}T/, "").replace(/\.\d+Z$/, "Z");
+  const sessionBadge = entry.session_id
+    ? ` ${DIM("[" + entry.session_id.slice(0, 8) + "]")}`
+    : "";
+  // Text may be long; truncate at 140 chars for list view
+  const text = entry.text.length > 140 ? entry.text.slice(0, 137) + "…" : entry.text;
+  console.log(
+    `  ${DIM(tsShort)}${sessionBadge} ${INFO(entry.agent.padEnd(24, " "))} ${FG(text)}`,
+  );
 }
 
 function printMissions(rows: MissionRegistryRow[], workspacePath: string, filters: {
@@ -229,6 +379,66 @@ async function cmdMissions(args: string[]): Promise<number> {
   return 0;
 }
 
+async function cmdMission(args: string[]): Promise<number> {
+  let workspacePath: string | undefined;
+  let missionId: string | undefined;
+  let logLimit = 10;
+
+  const positional: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--workspace" || arg === "-w") {
+      workspacePath = args[++i];
+    } else if (arg === "--id" || arg === "-i") {
+      missionId = args[++i];
+    } else if (arg === "--log-limit") {
+      const n = Number.parseInt(args[++i] ?? "", 10);
+      if (Number.isFinite(n) && n >= 0) logLimit = n;
+    } else if (arg && !arg.startsWith("-")) {
+      positional.push(arg);
+    }
+  }
+
+  if (!workspacePath && positional.length > 0) workspacePath = positional.shift();
+  if (!missionId && positional.length > 0) missionId = positional.shift();
+
+  if (!workspacePath || !missionId) {
+    console.error(ERR("error: workspace path + mission id required."));
+    console.error(
+      DIM("  usage: tot mission <workspace-path> <mission-id> [--log-limit N]"),
+    );
+    return 1;
+  }
+
+  // Normalize mission id to zero-padded 4-digit.
+  const idPadded = missionId.padStart(4, "0");
+  if (!/^\d{4}$/.test(idPadded)) {
+    console.error(ERR(`error: mission id must be 1-4 digits (got "${missionId}").`));
+    return 1;
+  }
+
+  const absPath = resolve(workspacePath);
+  const missionFolder = await findMissionFolder(absPath, idPadded);
+  if (!missionFolder) {
+    console.error(
+      ERR(`error: no mission folder matching "${idPadded}-*" under ${absPath}/missions/`),
+    );
+    return 2;
+  }
+
+  const statePath = join(missionFolder, "state.md");
+  try {
+    await access(statePath);
+  } catch {
+    console.error(ERR(`error: ${statePath} not found.`));
+    return 2;
+  }
+
+  const state = await readMissionStateFile(statePath);
+  printMissionDetail(state, logLimit);
+  return 0;
+}
+
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const command = argv[0];
@@ -242,6 +452,8 @@ async function main(): Promise<void> {
       code = await cmdWorkspaces();
     } else if (command === "missions") {
       code = await cmdMissions(argv.slice(1));
+    } else if (command === "mission") {
+      code = await cmdMission(argv.slice(1));
     } else {
       console.error(ERR(`unknown command: ${command}`));
       printHelp();

@@ -89,6 +89,9 @@ importers:
       '@team-orchestration/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      yaml:
+        specifier: ^2.6.0
+        version: 2.8.3
     devDependencies:
       '@types/node':
         specifier: ^20.0.0

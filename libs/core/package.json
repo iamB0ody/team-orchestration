@@ -13,7 +13,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@team-orchestration/shared-types": "workspace:*"
+    "@team-orchestration/shared-types": "workspace:*",
+    "yaml": "^2.6.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
